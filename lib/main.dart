@@ -1,125 +1,178 @@
 import 'package:flutter/material.dart';
 
+
 void main() {
   runApp(const MyApp());
 }
 
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Flutter Survey Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const SurveyPageView(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+class SurveyPageView extends StatefulWidget {
+  const SurveyPageView({super.key});
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<SurveyPageView> createState() => _SurveyPageViewState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
 
-  void _incrementCounter() {
+class _SurveyPageViewState extends State<SurveyPageView> {
+  final PageController _pageController = PageController();
+  int _currentQuestionIndex = 0;
+  int _hoverCounter = 0;
+
+
+  final List<Map<String, dynamic>> _questions = [
+    {
+      'questionText': 'What is your fitness goal?',
+      'answers': [
+        {'text': 'Lose Weight', 'score': 1},
+        {'text': 'Gain Muscle', 'score': 2},
+        {'text': 'Improve Endurance', 'score': 3},
+        {'text': 'General Fitness', 'score': 4},
+      ],
+    },
+    {
+      'questionText': 'How many days a week do you want to work out?',
+      'answers': [
+        {'text': '1-2 days', 'score': 1},
+        {'text': '3-4 days', 'score': 2},
+        {'text': '5-6 days', 'score': 3},
+        {'text': '7 days', 'score': 4},
+      ],
+    },
+  ];
+
+
+  void _answerQuestion(int score) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _currentQuestionIndex = (_currentQuestionIndex + 1) % _questions.length;
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     });
   }
 
+
+  void _incrementHoverCounter() {
+    setState(() {
+      _hoverCounter++;
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+    return PageView.builder(
+      controller: _pageController,
+      scrollDirection: Axis.vertical,
+      itemCount: _questions.length + 1, // Add 1 for the "Survey Completed" page
+      itemBuilder: (context, index) {
+        if (index < _questions.length) {
+          return SurveyQuestion(
+            questionText: _questions[index]['questionText'],
+            answers: _questions[index]['answers'],
+            onAnswerSelected: _answerQuestion,
+            hoverCounter: _hoverCounter,
+            onHover: _incrementHoverCounter,
+          );
+        } else {
+          return const Center(
+            child: Text(
+              'Survey Completed!',
+              style: TextStyle(fontSize: 20),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          );
+        }
+      },
+    );
+  }
+}
+
+
+class SurveyQuestion extends StatelessWidget {
+  final String questionText;
+  final List<Map<String, dynamic>> answers;
+  final void Function(int) onAnswerSelected;
+  final int hoverCounter;
+  final VoidCallback onHover;
+
+
+  const SurveyQuestion({
+    super.key,
+    required this.questionText,
+    required this.answers,
+    required this.onAnswerSelected,
+    required this.hoverCounter,
+    required this.onHover,
+  });
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            questionText,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 20),
+          ...answers.map(
+            (answer) => ElevatedButton(
+              onPressed: () => onAnswerSelected(answer['score']),
+              child: Text(answer['text']),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 40),
+          Center(
+            child: MouseRegion(
+              onEnter: (_) => onHover(),
+              child: Container(
+                width: 200,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'Hover over me!',
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Center(
+            child: Text(
+              'Hover Count: $hoverCounter',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
