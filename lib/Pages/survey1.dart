@@ -1,16 +1,37 @@
- // Suggested code may be subject to a license. Learn more: ~LicenseLog:515427613.
 import 'package:flutter/material.dart';
 
-class WorkoutSurveyPage extends StatefulWidget {
-  const WorkoutSurveyPage({Key? key}) : super(key: key);
-
-  @override
-  _WorkoutSurveyPageState createState() => _WorkoutSurveyPageState();
+void main() {
+  runApp(const MyApp());
 }
 
-class _WorkoutSurveyPageState extends State<WorkoutSurveyPage> {
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Survey Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: const MySurveyPage(title: 'Flutter Survey Demo'),
+    );
+  }
+}
+
+class MySurveyPage extends StatefulWidget {
+  const MySurveyPage({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<MySurveyPage> createState() => _MySurveyPageState();
+}
+
+class _MySurveyPageState extends State<MySurveyPage> {
   int _currentQuestionIndex = 0;
-  List<Map<String, dynamic>> _questions = [
+  final List<Map<String, dynamic>> _questions = [
     {
       'questionText': 'What is your fitness goal?',
       'answers': [
@@ -29,9 +50,7 @@ class _WorkoutSurveyPageState extends State<WorkoutSurveyPage> {
         {'text': '7 days', 'score': 4},
       ],
     },
-    // Add more questions here...
   ];
-
 
   void _answerQuestion(int score) {
     setState(() {
@@ -43,22 +62,38 @@ class _WorkoutSurveyPageState extends State<WorkoutSurveyPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Workout Survey'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
       ),
       body: _currentQuestionIndex < _questions.length
-          ? Column(
-              children: [
-                Text(_questions[_currentQuestionIndex]['questionText']),
-                ...(_questions[_currentQuestionIndex]['answers'] as List<Map<String, dynamic>>)
-                    .map((answer) => ElevatedButton(
+          ? Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _questions[_currentQuestionIndex]['questionText'],
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 20),
+                  ...(_questions[_currentQuestionIndex]['answers']
+                          as List<Map<String, dynamic>>)
+                      .map(
+                        (answer) => ElevatedButton(
                           onPressed: () => _answerQuestion(answer['score']),
                           child: Text(answer['text']),
-                        ))
-                    .toList(),
-              ],
+                        ),
+                      )
+                      ,
+                ],
+              ),
             )
-          : const Center(child: Text('Survey completed!')),
+          : const Center(
+              child: Text(
+                'Survey Completed!',
+                style: TextStyle(fontSize: 20),
+              ),
+            ),
     );
   }
 }
- 
