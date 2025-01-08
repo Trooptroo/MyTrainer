@@ -35,7 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // This will store activities for each day.
   final Map<DateTime, List<Map<String, String>>> _activities = {};
   DateTime _selectedDay = DateTime.now();
-  TextEditingController _activityController = TextEditingController();
+  final TextEditingController _activityController = TextEditingController();
 
   // Helper function to add an activity to a specific day
   void _addActivity(DateTime day, String activity, String time) {
