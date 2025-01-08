@@ -35,16 +35,20 @@ class _MyHomePageState extends State<MyHomePage> {
   // This will store activities for each day.
   final Map<DateTime, List<Map<String, String>>> _activities = {};
   DateTime _selectedDay = DateTime.now();
-  // ignore: unused_field
   final TextEditingController _activityController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
   // Helper function to add an activity to a specific day
-  void _addActivity(DateTime day, String activity, String time) {
+  void _addActivity(DateTime day, String activity, String time, String? description) {
     setState(() {
       if (_activities[day] == null) {
         _activities[day] = [];
       }
-      _activities[day]!.add({'activity': activity, 'time': time});
+      _activities[day]!.add({
+        'activity': activity,
+        'time': time,
+        'description': description ?? '', // If no description, use empty string
+      });
     });
   }
 
@@ -59,6 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _showAddActivityDialog(BuildContext context) {
     String? activity;
     String selectedTime = '00:00'; // Default time
+    String? description;
 
     showDialog(
       context: context,
@@ -69,10 +74,20 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                controller: _activityController,
                 onChanged: (value) {
                   activity = value;
                 },
                 decoration: const InputDecoration(hintText: 'Enter activity'),
+              ),
+              const SizedBox(height: 10),
+              // Optional Description field
+              TextField(
+                controller: _descriptionController,
+                onChanged: (value) {
+                  description = value;
+                },
+                decoration: const InputDecoration(hintText: 'Enter description (optional)'),
               ),
               const SizedBox(height: 10),
               // Time picker button
@@ -96,14 +111,20 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 Navigator.pop(context);
                 if (activity != null && activity!.isNotEmpty) {
-                  _addActivity(_selectedDay, activity!, selectedTime);
+                  _addActivity(_selectedDay, activity!, selectedTime, description);
                 }
+                // Clear the text controllers after adding
+                _activityController.clear();
+                _descriptionController.clear();
               },
               child: const Text('Add'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
+                // Clear the text controllers if canceled
+                _activityController.clear();
+                _descriptionController.clear();
               },
               child: const Text('Cancel'),
             ),
@@ -158,6 +179,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   child: ListTile(
                     title: Text('${activity['activity']} - ${activity['time']}'),
+                    subtitle: activity['description']!.isNotEmpty
+                        ? Text('Description: ${activity['description']}')
+                        : null,
                   ),
                 );
               },
