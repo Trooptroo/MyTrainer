@@ -33,22 +33,22 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   // This will store activities for each day.
-  final Map<DateTime, List<String>> _activities = {};
+  final Map<DateTime, List<Map<String, String>>> _activities = {};
   DateTime _selectedDay = DateTime.now();
   TextEditingController _activityController = TextEditingController();
 
   // Helper function to add an activity to a specific day
-  void _addActivity(DateTime day, String activity) {
+  void _addActivity(DateTime day, String activity, String time) {
     setState(() {
       if (_activities[day] == null) {
         _activities[day] = [];
       }
-      _activities[day]!.add(activity);
+      _activities[day]!.add({'activity': activity, 'time': time});
     });
   }
 
   // Helper function to remove an activity from a specific day
-  void _removeActivity(DateTime day, String activity) {
+  void _removeActivity(DateTime day, Map<String, String> activity) {
     setState(() {
       _activities[day]?.remove(activity);
     });
@@ -56,30 +56,52 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // Displaying a dialog to add a new activity
   void _showAddActivityDialog(BuildContext context) {
+    String? activity;
+    String selectedTime = '00:00'; // Default time
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text("Add Activity"),
-          content: TextField(
-            controller: _activityController,
-            decoration: const InputDecoration(hintText: 'Enter activity'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                onChanged: (value) {
+                  activity = value;
+                },
+                decoration: const InputDecoration(hintText: 'Enter activity'),
+              ),
+              const SizedBox(height: 10),
+              // Time picker button
+              TextButton(
+                onPressed: () async {
+                  final timeOfDay = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay(hour: 12, minute: 0),
+                  );
+                  if (timeOfDay != null) {
+                    selectedTime = timeOfDay.format(context);
+                  }
+                },
+                child: Text('Select Time: $selectedTime'),
+              ),
+            ],
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                if (_activityController.text.isNotEmpty) {
-                  _addActivity(_selectedDay, _activityController.text);
+                if (activity != null && activity.isNotEmpty) {
+                  _addActivity(_selectedDay, activity, selectedTime);
                 }
-                _activityController.clear();
               },
               child: const Text('Add'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _activityController.clear();
               },
               child: const Text('Cancel'),
             ),
@@ -118,12 +140,12 @@ class _MyHomePageState extends State<MyHomePage> {
               itemBuilder: (context, index) {
                 final activity = _activities[_selectedDay]![index];
                 return Dismissible(
-                  key: Key(activity),
+                  key: Key(activity['activity']!),
                   direction: DismissDirection.endToStart,
                   onDismissed: (direction) {
                     _removeActivity(_selectedDay, activity);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('$activity removed')),
+                      SnackBar(content: Text('${activity['activity']} removed')),
                     );
                   },
                   background: Container(
@@ -133,7 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
                   ),
                   child: ListTile(
-                    title: Text(activity),
+                    title: Text('${activity['activity']} - ${activity['time']}'),
                   ),
                 );
               },
