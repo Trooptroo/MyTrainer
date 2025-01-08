@@ -43,7 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               // App Logo on top
               Image.asset(
-                'assets/applogo.png', // Replace with your logo path
+                'assets/ea.png', // Replace with your logo path
                 width: 100,          // Adjust width as needed
                 height: 100,         // Adjust height as needed
               ),
