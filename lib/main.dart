@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+// ignore: depend_on_referenced_packages
+import 'package:table_calendar/table_calendar.dart';
 
 void main() {
   runApp(const MyApp());
@@ -21,10 +22,10 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
 
-class SurveyPageView extends StatefulWidget {
-  const SurveyPageView({super.key});
-
+  final String title;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -32,54 +33,76 @@ class SurveyPageView extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   // This will store activities for each day.
-  final Map<DateTime, List<String>> _activities = {};
+  final Map<DateTime, List<Map<String, String>>> _activities = {};
   DateTime _selectedDay = DateTime.now();
-  TextEditingController _activityController = TextEditingController();
+  // ignore: unused_field
+  final TextEditingController _activityController = TextEditingController();
 
   // Helper function to add an activity to a specific day
-  void _addActivity(DateTime day, String activity) {
+  void _addActivity(DateTime day, String activity, String time) {
     setState(() {
       if (_activities[day] == null) {
         _activities[day] = [];
       }
-      _activities[day]!.add(activity);
+      _activities[day]!.add({'activity': activity, 'time': time});
     });
   }
 
   // Helper function to remove an activity from a specific day
-  void _removeActivity(DateTime day, String activity) {
+  void _removeActivity(DateTime day, Map<String, String> activity) {
     setState(() {
-      _hoverCounter++;
+      _activities[day]?.remove(activity);
     });
   }
 
-
   // Displaying a dialog to add a new activity
   void _showAddActivityDialog(BuildContext context) {
+    String? activity;
+    String selectedTime = '00:00'; // Default time
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text("Add Activity"),
-          content: TextField(
-            controller: _activityController,
-            decoration: const InputDecoration(hintText: 'Enter activity'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                onChanged: (value) {
+                  activity = value;
+                },
+                decoration: const InputDecoration(hintText: 'Enter activity'),
+              ),
+              const SizedBox(height: 10),
+              // Time picker button
+              TextButton(
+                onPressed: () async {
+                  final timeOfDay = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay(hour: 12, minute: 0),
+                  );
+                  if (timeOfDay != null) {
+                    selectedTime = timeOfDay.format(context);
+                  }
+                },
+                child: Text('Select Time: $selectedTime'),
+              ),
+            ],
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                if (_activityController.text.isNotEmpty) {
-                  _addActivity(_selectedDay, _activityController.text);
+                if (activity != null && activity!.isNotEmpty) {
+                  _addActivity(_selectedDay, activity!, selectedTime);
                 }
-                _activityController.clear();
               },
               child: const Text('Add'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _activityController.clear();
               },
               child: const Text('Cancel'),
             ),
@@ -88,26 +111,6 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
   }
-}
-
-
-class SurveyQuestion extends StatelessWidget {
-  final String questionText;
-  final List<Map<String, dynamic>> answers;
-  final void Function(int) onAnswerSelected;
-  final int hoverCounter;
-  final VoidCallback onHover;
-
-
-  const SurveyQuestion({
-    super.key,
-    required this.questionText,
-    required this.answers,
-    required this.onAnswerSelected,
-    required this.hoverCounter,
-    required this.onHover,
-  });
-
 
   @override
   Widget build(BuildContext context) {
@@ -118,16 +121,17 @@ class SurveyQuestion extends StatelessWidget {
       ),
       body: Column(
         children: [
-          Text(
-            questionText,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 20),
-          ...answers.map(
-            (answer) => ElevatedButton(
-              onPressed: () => onAnswerSelected(answer['score']),
-              child: Text(answer['text']),
-            ),
+          // Table Calendar widget
+          TableCalendar(
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _selectedDay,
+            selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+              });
+            },
           ),
 
           // List of activities for the selected day
@@ -137,12 +141,12 @@ class SurveyQuestion extends StatelessWidget {
               itemBuilder: (context, index) {
                 final activity = _activities[_selectedDay]![index];
                 return Dismissible(
-                  key: Key(activity),
+                  key: Key(activity['activity']!), // Key should be unique
                   direction: DismissDirection.endToStart,
                   onDismissed: (direction) {
                     _removeActivity(_selectedDay, activity);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('$activity removed')),
+                      SnackBar(content: Text('${activity['activity']} removed')),
                     );
                   },
                   background: Container(
@@ -152,7 +156,7 @@ class SurveyQuestion extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
                   ),
                   child: ListTile(
-                    title: Text(activity),
+                    title: Text('${activity['activity']} - ${activity['time']}'),
                   ),
                 );
               },
@@ -167,4 +171,3 @@ class SurveyQuestion extends StatelessWidget {
     );
   }
 }
-
