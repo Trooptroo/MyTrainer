@@ -79,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () async {
                   final timeOfDay = await showTimePicker(
                     context: context,
-                    initialTime: TimeOfDay(hour: 12, minute: 0),
+                    initialTime: const TimeOfDay(hour: 12, minute: 0),
                   );
                   if (timeOfDay != null) {
                     selectedTime = timeOfDay.format(context);
@@ -150,9 +150,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   background: Container(
                     color: Colors.red,
-                    child: const Icon(Icons.delete, color: Colors.white),
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                    child: const Icon(Icons.delete, color: Colors.white),
                   ),
                   child: ListTile(
                     title: Text('${activity['activity']} - ${activity['time']}'),

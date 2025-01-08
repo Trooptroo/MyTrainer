@@ -35,7 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // This will store activities for each day.
   final Map<DateTime, List<String>> _activities = {};
   DateTime _selectedDay = DateTime.now();
-  TextEditingController _activityController = TextEditingController();
+  final TextEditingController _activityController = TextEditingController();
 
   // Helper function to add an activity to a specific day
   void _addActivity(DateTime day, String activity) {
@@ -128,9 +128,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   background: Container(
                     color: Colors.red,
-                    child: const Icon(Icons.delete, color: Colors.white),
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                    child: const Icon(Icons.delete, color: Colors.white),
                   ),
                   child: ListTile(
                     title: Text(activity),
