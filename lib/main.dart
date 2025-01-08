@@ -30,73 +30,58 @@ class SurveyPageView extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class _MyHomePageState extends State<MyHomePage> {
+  // This will store activities for each day.
+  final Map<DateTime, List<String>> _activities = {};
+  DateTime _selectedDay = DateTime.now();
+  TextEditingController _activityController = TextEditingController();
 
-class _SurveyPageViewState extends State<SurveyPageView> {
-  final PageController _pageController = PageController();
-  int _currentQuestionIndex = 0;
-  int _hoverCounter = 0;
-
-
-  final List<Map<String, dynamic>> _questions = [
-    {
-      'questionText': 'What is your fitness goal?',
-      'answers': [
-        {'text': 'Lose Weight', 'score': 1},
-        {'text': 'Gain Muscle', 'score': 2},
-        {'text': 'Improve Endurance', 'score': 3},
-        {'text': 'General Fitness', 'score': 4},
-      ],
-    },
-    {
-      'questionText': 'How many days a week do you want to work out?',
-      'answers': [
-        {'text': '1-2 days', 'score': 1},
-        {'text': '3-4 days', 'score': 2},
-        {'text': '5-6 days', 'score': 3},
-        {'text': '7 days', 'score': 4},
-      ],
-    },
-  ];
-
-
-  void _answerQuestion(int score) {
+  // Helper function to add an activity to a specific day
+  void _addActivity(DateTime day, String activity) {
     setState(() {
-      _currentQuestionIndex = (_currentQuestionIndex + 1) % _questions.length;
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      if (_activities[day] == null) {
+        _activities[day] = [];
+      }
+      _activities[day]!.add(activity);
     });
   }
 
-
-  void _incrementHoverCounter() {
+  // Helper function to remove an activity from a specific day
+  void _removeActivity(DateTime day, String activity) {
     setState(() {
       _hoverCounter++;
     });
   }
 
 
-  @override
-  Widget build(BuildContext context) {
-    return PageView.builder(
-      controller: _pageController,
-      scrollDirection: Axis.vertical,
-      itemCount: _questions.length + 1, // Add 1 for the "Survey Completed" page
-      itemBuilder: (context, index) {
-        if (index < _questions.length) {
-          return SurveyQuestion(
-            questionText: _questions[index]['questionText'],
-            answers: _questions[index]['answers'],
-            onAnswerSelected: _answerQuestion,
-            hoverCounter: _hoverCounter,
-            onHover: _incrementHoverCounter,
-          );
-        } else {
-          return const Center(
-            child: Text(
-              'Survey Completed!',
-              style: TextStyle(fontSize: 20),
+  // Displaying a dialog to add a new activity
+  void _showAddActivityDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Add Activity"),
+          content: TextField(
+            controller: _activityController,
+            decoration: const InputDecoration(hintText: 'Enter activity'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                if (_activityController.text.isNotEmpty) {
+                  _addActivity(_selectedDay, _activityController.text);
+                }
+                _activityController.clear();
+              },
+              child: const Text('Add'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _activityController.clear();
+              },
+              child: const Text('Cancel'),
             ),
           ],
         );
@@ -144,30 +129,33 @@ class SurveyQuestion extends StatelessWidget {
               child: Text(answer['text']),
             ),
           ),
-          const SizedBox(height: 40),
-          Center(
-            child: MouseRegion(
-              onEnter: (_) => onHover(),
-              child: Container(
-                width: 200,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.deepPurple,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'Hover over me!',
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Center(
-            child: Text(
-              'Hover Count: $hoverCounter',
-              style: Theme.of(context).textTheme.titleMedium,
+
+          // List of activities for the selected day
+          Expanded(
+            child: ListView.builder(
+              itemCount: _activities[_selectedDay]?.length ?? 0,
+              itemBuilder: (context, index) {
+                final activity = _activities[_selectedDay]![index];
+                return Dismissible(
+                  key: Key(activity),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) {
+                    _removeActivity(_selectedDay, activity);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('$activity removed')),
+                    );
+                  },
+                  background: Container(
+                    color: Colors.red,
+                    child: const Icon(Icons.delete, color: Colors.white),
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                  ),
+                  child: ListTile(
+                    title: Text(activity),
+                  ),
+                );
+              },
             ),
           ),
         ],
