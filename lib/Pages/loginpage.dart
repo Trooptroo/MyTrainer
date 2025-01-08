@@ -38,7 +38,8 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start, // Force elements to align at the top
+            mainAxisAlignment:
+                MainAxisAlignment.start, // Force elements to align at the top
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Fixed Logo size in a SizedBox
@@ -46,8 +47,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 width: 300,
                 height: 300,
                 child: Image.asset(
-                  'assets/images/logo.png',  // Replace with your logo path
-                  fit: BoxFit.contain, // Ensures the logo fits without distortion
+                  'assets/images/logo.png', // Replace with your logo path
+                  fit: BoxFit
+                      .contain, // Ensures the logo fits without distortion
                 ),
               ),
               const SizedBox(height: 10), // Reduced space between logo and text
@@ -60,7 +62,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 10), // Reduced space between text and inputs
+              const SizedBox(
+                  height: 10), // Reduced space between text and inputs
 
               // No Expanded widget, so elements will stay close to the top
               SizedBox(
@@ -79,7 +82,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     TextButton(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Forgot password clicked!')),
+                          const SnackBar(
+                              content: Text('Forgot password clicked!')),
                         );
                       },
                       style: TextButton.styleFrom(
@@ -152,7 +156,8 @@ class _MyHomePageState extends State<MyHomePage> {
             borderRadius: BorderRadius.circular(8.0),
             borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         ),
       ),
     );
