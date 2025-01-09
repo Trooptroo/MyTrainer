@@ -30,140 +30,112 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isPortrait = constraints.maxHeight > constraints.maxWidth;
+  // This will store activities for each day.
+  final Map<DateTime, List<String>> _activities = {};
+  DateTime _selectedDay = DateTime.now();
+  TextEditingController _activityController = TextEditingController();
 
-          return Stack(
-            children: [
-              // Background image
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/images/loginbg.png', // Replace with your image path
-                  fit: BoxFit.fill, // Ensures the image covers the entire screen
-                ),
-              ),
-              // Foreground content
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isPortrait ? constraints.maxWidth * 0.05 : constraints.maxWidth * 0.1, // Adjust for orientation
-                  ),
-                  child: Column(
-                    mainAxisAlignment: isPortrait
-                        ? MainAxisAlignment.start
-                        : MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Spacer to push content down
-                      SizedBox(height: constraints.maxHeight * 0.18), // Increased space from top (logo will move down)
-                      // Logo - Increased size
-                      SizedBox(
-                        width: isPortrait
-                            ? constraints.maxWidth * 0.5 // Larger size for logo
-                            : constraints.maxWidth * 0.3, // Larger size for logo
-                        height: isPortrait
-                            ? constraints.maxHeight * 0.14 // Larger size for logo
-                            : constraints.maxHeight * 0.18, // Larger size for logo
-                        child: Image.asset(
-                          'assets/images/logo.png', // Replace with your logo path
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      if (isPortrait) SizedBox(height: constraints.maxHeight * 0.05), // Moved down "Sign in with email"
-                      const Text(
-                        'Sign in',
-                        style: TextStyle(
-                          fontSize: 22, // Slightly reduced font size
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: constraints.maxHeight * 0.02),
-                      // Email field
-                      SizedBox(
-                        width: constraints.maxWidth * 0.7, // Reduced width for the email field
-                        child: _buildTextField('Email', false, constraints.maxHeight),
-                      ),
-                      SizedBox(height: constraints.maxHeight * 0.02),
-                      // Password field and Forgot Password button
-                      SizedBox(
-                        width: constraints.maxWidth * 0.7, // Reduced width for the password field
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            _buildTextField('Password', true, constraints.maxHeight),
-                            SizedBox(height: constraints.maxHeight * 0.01),
-                            TextButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Forgot password clicked!'),
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFFFFF9C4),
-                              ),
-                              child: const Text(
-                                'Forgot password?',
-                                style: TextStyle(fontSize: 12), // Reduced font size
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: constraints.maxHeight * 0.03),
-                      // Get Started button - Increased height
-                      SizedBox(
-                        width: constraints.maxWidth * 0.7, // Reduced width for the button
-                        height: constraints.maxHeight * 0.08, // Increased height
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFF9C4),
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Get Started clicked!')),
-                            );
-                          },
-                          child: const Text(
-                            'Get Started',
-                            style: TextStyle(
-                              fontSize: 18, // Reduced font size
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+  // Helper function to add an activity to a specific day
+  void _addActivity(DateTime day, String activity) {
+    setState(() {
+      if (_activities[day] == null) {
+        _activities[day] = [];
+      }
+      _activities[day]!.add(activity);
+    });
+  }
+
+  // Helper function to remove an activity from a specific day
+  void _removeActivity(DateTime day, String activity) {
+    setState(() {
+      _activities[day]?.remove(activity);
+    });
+  }
+
+  // Displaying a dialog to add a new activity
+  void _showAddActivityDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Add Activity"),
+          content: TextField(
+            controller: _activityController,
+            decoration: const InputDecoration(hintText: 'Enter activity'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                if (_activityController.text.isNotEmpty) {
+                  _addActivity(_selectedDay, _activityController.text);
+                }
+                _activityController.clear();
+              },
+              child: const Text('Add'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _activityController.clear();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildTextField(String label, bool obscureText, double screenHeight) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: Column(
+        children: [
+          // Table Calendar widget
+          TableCalendar(
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _selectedDay,
+            selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+              });
+            },
+          ),
+
+          // List of activities for the selected day
+          Expanded(
+            child: ListView.builder(
+              itemCount: _activities[_selectedDay]?.length ?? 0,
+              itemBuilder: (context, index) {
+                final activity = _activities[_selectedDay]![index];
+                return Dismissible(
+                  key: Key(activity),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) {
+                    _removeActivity(_selectedDay, activity);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('$activity removed')),
+                    );
+                  },
+                  background: Container(
+                    color: Colors.red,
+                    child: const Icon(Icons.delete, color: Colors.white),
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                  ),
+                  child: ListTile(
+                    title: Text(activity),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),

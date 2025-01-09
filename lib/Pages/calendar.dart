@@ -1,20 +1,9 @@
-import 'dart:math';
-
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:time_planner/time_planner.dart';
+// ignore: depend_on_referenced_packages
+import 'package:table_calendar/table_calendar.dart';
 
 void main() {
   runApp(const MyApp());
-}
-
-class MyCustomScrollBehavior extends MaterialScrollBehavior {
-  // Override behavior methods and getters like dragDevices
-  @override
-  Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-      };
 }
 
 class MyApp extends StatelessWidget {
@@ -23,13 +12,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Time planner Demo',
-      scrollBehavior: MyCustomScrollBehavior(),
+      title: 'Calendar with Activities',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Time planner'),
+      home: const MyHomePage(title: 'Calendar with Activities'),
     );
   }
 }
@@ -40,45 +28,65 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<TimePlannerTask> tasks = [];
+  // This will store activities for each day.
+  final Map<DateTime, List<String>> _activities = {};
+  DateTime _selectedDay = DateTime.now();
+  final TextEditingController _activityController = TextEditingController();
 
-  void _addObject(BuildContext context) {
-    List<Color?> colors = [
-      Colors.purple,
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.lime[600]
-    ];
-
+  // Helper function to add an activity to a specific day
+  void _addActivity(DateTime day, String activity) {
     setState(() {
-      tasks.add(
-        TimePlannerTask(
-          color: colors[Random().nextInt(colors.length)],
-          dateTime: TimePlannerDateTime(
-              day: Random().nextInt(14),
-              hour: Random().nextInt(18) + 6,
-              minutes: Random().nextInt(60)),
-          minutesDuration: Random().nextInt(90) + 30,
-          daysDuration: Random().nextInt(4) + 1,
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('You click on time planner object')));
-          },
-          child: Text(
-            'this is a demo',
-            style: TextStyle(color: Colors.grey[350], fontSize: 12),
-          ),
-        ),
-      );
+      if (_activities[day] == null) {
+        _activities[day] = [];
+      }
+      _activities[day]!.add(activity);
     });
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Random task added to time planner!')));
+  // Helper function to remove an activity from a specific day
+  void _removeActivity(DateTime day, String activity) {
+    setState(() {
+      _activities[day]?.remove(activity);
+    });
+  }
+
+  // Displaying a dialog to add a new activity
+  void _showAddActivityDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Add Activity"),
+          content: TextField(
+            controller: _activityController,
+            decoration: const InputDecoration(hintText: 'Enter activity'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                if (_activityController.text.isNotEmpty) {
+                  _addActivity(_selectedDay, _activityController.text);
+                }
+                _activityController.clear();
+              },
+              child: const Text('Add'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _activityController.clear();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -86,113 +94,55 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        centerTitle: true,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: Center(
-        child: TimePlanner(
-          startHour: 6,
-          endHour: 23,
-          use24HourFormat: false,
-          setTimeOnAxis: false,
-          style: TimePlannerStyle(
-            // cellHeight: 60,
-            // cellWidth: 60,
-            showScrollBar: true,
-            interstitialEvenColor: Colors.grey[50],
-            interstitialOddColor: Colors.grey[200],
+      body: Column(
+        children: [
+          // Table Calendar widget
+          TableCalendar(
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _selectedDay,
+            selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+              });
+            },
           ),
-          headers: const [
-            TimePlannerTitle(
-              date: "3/10/2021",
-              title: "sunday",
+
+          // List of activities for the selected day
+          Expanded(
+            child: ListView.builder(
+              itemCount: _activities[_selectedDay]?.length ?? 0,
+              itemBuilder: (context, index) {
+                final activity = _activities[_selectedDay]![index];
+                return Dismissible(
+                  key: Key(activity),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) {
+                    _removeActivity(_selectedDay, activity);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('$activity removed')),
+                    );
+                  },
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  child: ListTile(
+                    title: Text(activity),
+                  ),
+                );
+              },
             ),
-            TimePlannerTitle(
-              date: "3/11/2021",
-              title: "monday",
-            ),
-            TimePlannerTitle(
-              date: "3/12/2021",
-              title: "tuesday",
-            ),
-            TimePlannerTitle(
-              date: "3/13/2021",
-              title: "wednesday",
-            ),
-            TimePlannerTitle(
-              date: "3/14/2021",
-              title: "thursday",
-            ),
-            TimePlannerTitle(
-              date: "3/15/2021",
-              title: "friday",
-            ),
-            TimePlannerTitle(
-              date: "3/16/2021",
-              title: "saturday",
-            ),
-            TimePlannerTitle(
-              date: "3/17/2021",
-              title: "sunday",
-            ),
-            TimePlannerTitle(
-              date: "3/18/2021",
-              title: "monday",
-            ),
-            TimePlannerTitle(
-              date: "3/19/2021",
-              title: "tuesday",
-            ),
-            TimePlannerTitle(
-              date: "3/20/2021",
-              title: "wednesday",
-            ),
-            TimePlannerTitle(
-              date: "3/21/2021",
-              title: "thursday",
-            ),
-            TimePlannerTitle(
-              date: "3/22/2021",
-              title: "friday",
-            ),
-            TimePlannerTitle(
-              date: "3/23/2021",
-              title: "saturday",
-            ),
-            TimePlannerTitle(
-              date: "3/24/2021",
-              title: "tuesday",
-            ),
-            TimePlannerTitle(
-              date: "3/25/2021",
-              title: "wednesday",
-            ),
-            TimePlannerTitle(
-              date: "3/26/2021",
-              title: "thursday",
-            ),
-            TimePlannerTitle(
-              date: "3/27/2021",
-              title: "friday",
-            ),
-            TimePlannerTitle(
-              date: "3/28/2021",
-              title: "saturday",
-            ),
-            TimePlannerTitle(
-              date: "3/29/2021",
-              title: "friday",
-            ),
-            TimePlannerTitle(
-              date: "3/30/2021",
-              title: "saturday",
-            ),
-          ],
-          tasks: tasks,
-        ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _addObject(context),
-        tooltip: 'Add random task',
+        onPressed: () => _showAddActivityDialog(context),
         child: const Icon(Icons.add),
       ),
     );
