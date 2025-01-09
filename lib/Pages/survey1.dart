@@ -9,7 +9,7 @@ class WorkoutSurveyPage extends StatefulWidget {
 
 class _WorkoutSurveyPageState extends State<WorkoutSurveyPage> {
   int _currentQuestionIndex = 0;
-  List<Map<String, dynamic>> _questions = [
+  final List<Map<String, dynamic>> _questions = [
     {
       'questionText': 'What is your fitness goal?',
       'answers': [
