@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+// ignore: depend_on_referenced_packages
+import 'package:table_calendar/table_calendar.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,44 +12,133 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Sign-In Demo',
+      title: 'Calendar with Activities',
       theme: ThemeData(
-<<<<<<< HEAD
-        fontFamily: 'Roboto',
-=======
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.black, // Set the scaffold background to black
->>>>>>> d53436c (new calendar)
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
       ),
-<<<<<<< HEAD
-      home: const MyHomePage(),
-=======
       debugShowCheckedModeBanner: false, // Disable the debug banner
       home: const MyHomePage(title: 'Calendar with Activities'),
->>>>>>> d53436c (new calendar)
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  const MyHomePage({super.key, required this.title});
+
+  final String title;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  // This will store activities for each day.
+  final Map<DateTime, List<Map<String, String>>> _activities = {};
+  DateTime _selectedDay = DateTime.now();
+  final TextEditingController _activityController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+
+  // Helper function to add an activity to a specific day
+  void _addActivity(DateTime day, String activity, String time, String? description) {
+    setState(() {
+      if (_activities[day] == null) {
+        _activities[day] = [];
+      }
+      _activities[day]!.add({
+        'activity': activity,
+        'time': time,
+        'description': description ?? '', // If no description, use empty string
+      });
+    });
+  }
+
+  // Helper function to remove an activity from a specific day
+  void _removeActivity(DateTime day, Map<String, String> activity) {
+    setState(() {
+      _activities[day]?.remove(activity);
+    });
+  }
+
+  // Displaying a dialog to add a new activity
+  void _showAddActivityDialog(BuildContext context) {
+    String? activity;
+    String selectedTime = '00:00'; // Default time
+    String? description;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Add Activity"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _activityController,
+                onChanged: (value) {
+                  activity = value;
+                },
+                decoration: const InputDecoration(hintText: 'Enter activity'),
+              ),
+              const SizedBox(height: 10),
+              // Optional Description field
+              TextField(
+                controller: _descriptionController,
+                onChanged: (value) {
+                  description = value;
+                },
+                decoration: const InputDecoration(hintText: 'Enter description (optional)'),
+              ),
+              const SizedBox(height: 10),
+              // Time picker button
+              TextButton(
+                onPressed: () async {
+                  final timeOfDay = await showTimePicker(
+                    context: context,
+                    initialTime: const TimeOfDay(hour: 12, minute: 0),
+                  );
+                  if (timeOfDay != null && mounted) {
+                    // ignore: use_build_context_synchronously
+                    selectedTime = timeOfDay.format(context);
+                  }
+                },
+                child: Text('Select Time: $selectedTime'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                if (activity != null && activity!.isNotEmpty) {
+                  _addActivity(_selectedDay, activity!, selectedTime, description);
+                }
+                // Clear the text controllers after adding
+                _activityController.clear();
+                _descriptionController.clear();
+              },
+              child: const Text('Add'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Clear the text controllers if canceled
+                _activityController.clear();
+                _descriptionController.clear();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-<<<<<<< HEAD
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isPortrait = constraints.maxHeight > constraints.maxWidth;
-=======
       appBar: null, // Removed the AppBar to remove the purple bar and title
       body: Column(
         children: [
@@ -85,155 +176,58 @@ class _MyHomePageState extends State<MyHomePage> {
               rightChevronIcon: Icon(Icons.chevron_right, color: Color(0xFFFFF9C4)),
             ),
           ),
->>>>>>> d53436c (new calendar)
 
-          return Stack(
-            children: [
-              // Background image
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/images/loginbg.png', // Replace with your image path
-                  fit: BoxFit.fill, // Ensures the image covers the entire screen
-                ),
-              ),
-              // Foreground content
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isPortrait ? constraints.maxWidth * 0.05 : constraints.maxWidth * 0.1, // Adjust for orientation
+          // List of activities for the selected day
+          Expanded(
+            child: ListView.builder(
+              itemCount: _activities[_selectedDay]?.length ?? 0,
+              itemBuilder: (context, index) {
+                final activity = _activities[_selectedDay]![index];
+                return Dismissible(
+                  key: Key(activity['activity']!), // Key should be unique
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) {
+                    _removeActivity(_selectedDay, activity);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${activity['activity']} removed')),
+                    );
+                  },
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                    child: const Icon(Icons.delete, color: Color(0xFFFFF9C4)),
                   ),
-                  child: Column(
-                    mainAxisAlignment: isPortrait
-                        ? MainAxisAlignment.start
-                        : MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Spacer to push content down
-                      SizedBox(height: constraints.maxHeight * 0.18), // Increased space from top (logo will move down)
-                      // Logo - Increased size
-                      SizedBox(
-                        width: isPortrait
-                            ? constraints.maxWidth * 0.5 // Larger size for logo
-                            : constraints.maxWidth * 0.3, // Larger size for logo
-                        height: isPortrait
-                            ? constraints.maxHeight * 0.14 // Larger size for logo
-                            : constraints.maxHeight * 0.18, // Larger size for logo
-                        child: Image.asset(
-                          'assets/images/logo.png', // Replace with your logo path
-                          fit: BoxFit.contain,
+                  child: Container(
+                    color: Colors.black, // Set the background color to black for the activity list
+                    child: ListTile(
+                      title: Text(
+                        '${activity['activity']} - ${activity['time']}',
+                        style: const TextStyle(
+                          color: Color(0xFFFFF9C4), // Set the text color to white for better visibility
+                          fontSize: 16, // Optional: Adjust font size
                         ),
                       ),
-                      if (isPortrait) SizedBox(height: constraints.maxHeight * 0.05), // Moved down "Sign in with email"
-                      const Text(
-                        'Sign in',
-                        style: TextStyle(
-                          fontSize: 22, // Slightly reduced font size
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: constraints.maxHeight * 0.02),
-                      // Email field
-                      SizedBox(
-                        width: constraints.maxWidth * 0.7, // Reduced width for the email field
-                        child: _buildTextField('Email', false, constraints.maxHeight),
-                      ),
-                      SizedBox(height: constraints.maxHeight * 0.02),
-                      // Password field and Forgot Password button
-                      SizedBox(
-                        width: constraints.maxWidth * 0.7, // Reduced width for the password field
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            _buildTextField('Password', true, constraints.maxHeight),
-                            SizedBox(height: constraints.maxHeight * 0.01),
-                            TextButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Forgot password clicked!'),
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFFFFF9C4),
+                      subtitle: activity['description']!.isNotEmpty
+                          ? Text(
+                              'Description: ${activity['description']}',
+                              style: const TextStyle(
+                                color: Color(0xFFFFF9C4), // Light grey for description
+                                fontSize: 14, // Optional: Adjust font size for description
                               ),
-                              child: const Text(
-                                'Forgot password?',
-                                style: TextStyle(fontSize: 12), // Reduced font size
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: constraints.maxHeight * 0.03),
-                      // Get Started button - Increased height
-                      SizedBox(
-                        width: constraints.maxWidth * 0.7, // Reduced width for the button
-                        height: constraints.maxHeight * 0.08, // Increased height
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFF9C4),
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Get Started clicked!')),
-                            );
-                          },
-                          child: const Text(
-                            'Get Started',
-                            style: TextStyle(
-                              fontSize: 18, // Reduced font size
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                            )
+                          : null,
+                    ),
                   ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, bool obscureText, double screenHeight) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+                );
+              },
+            ),
           ),
         ],
       ),
-      child: TextField(
-        obscureText: obscureText,
-        style: const TextStyle(fontSize: 14), // Reduced font size
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 14), // Reduced font size
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: screenHeight * 0.012, // Reduced padding
-          ),
-        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddActivityDialog(context),
+        child: const Icon(Icons.add),
       ),
     );
   }
