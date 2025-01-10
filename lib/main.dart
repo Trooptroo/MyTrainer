@@ -13,11 +13,21 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Sign-In Demo',
       theme: ThemeData(
+<<<<<<< HEAD
         fontFamily: 'Roboto',
+=======
+        useMaterial3: true,
+        scaffoldBackgroundColor: Colors.black, // Set the scaffold background to black
+>>>>>>> d53436c (new calendar)
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+<<<<<<< HEAD
       home: const MyHomePage(),
+=======
+      debugShowCheckedModeBanner: false, // Disable the debug banner
+      home: const MyHomePage(title: 'Calendar with Activities'),
+>>>>>>> d53436c (new calendar)
     );
   }
 }
@@ -33,9 +43,49 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< HEAD
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isPortrait = constraints.maxHeight > constraints.maxWidth;
+=======
+      appBar: null, // Removed the AppBar to remove the purple bar and title
+      body: Column(
+        children: [
+          // Table Calendar widget with custom styles
+          TableCalendar(
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _selectedDay,
+            selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+              });
+            },
+            calendarStyle: const CalendarStyle(
+              todayDecoration: BoxDecoration(
+                color: Color(0xFFFFF9C4), // Yellow color for today's date
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: BoxDecoration(
+                color: Colors.blue, // Black color for selected date
+                shape: BoxShape.circle,
+              ),
+              defaultTextStyle: TextStyle(color: Color(0xFFFFF9C4)), // Yellow text color for default dates
+              weekendTextStyle: TextStyle(color: Color(0xFFFFF9C4)), // Yellow text color for weekends
+              outsideTextStyle: TextStyle(color: Colors.grey), // Grey for outside current month dates
+            ),
+            headerStyle: const HeaderStyle(
+              titleTextStyle: TextStyle(
+                color: Color(0xFFFFF9C4), // Yellow title text
+                fontSize: 30, // Bigger font size for the month and year
+                fontWeight: FontWeight.bold,
+              ),
+              leftChevronIcon: Icon(Icons.chevron_left, color: Color(0xFFFFF9C4)),
+              rightChevronIcon: Icon(Icons.chevron_right, color: Color(0xFFFFF9C4)),
+            ),
+          ),
+>>>>>>> d53436c (new calendar)
 
           return Stack(
             children: [
